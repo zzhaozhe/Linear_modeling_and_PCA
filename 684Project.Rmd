@@ -1,0 +1,192 @@
+---
+title: "684 Project"
+author: "Zhe Zhao"
+date: "5/1/2018"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r}
+data684 <- read.csv("final_project_Spr18.csv", header=T)
+
+# PCA
+prcomp(data684[,2:12], scale.=TRUE)
+(eigens <- prcomp(data684[,2:12], scale.=TRUE)$sdev^2)
+cbind(eigens,cumsum(eigens))
+
+plot(eigens,type="l",xlab="component",ylab="eigenvalue")
+points(eigens)
+
+plot(cumsum(eigens),type="l",xlab="component",ylab="cumulative eigenvalue sum")
+points(cumsum(eigens))
+```
+```{r}
+print(factanal(data684[,2:12],3,rotation="promax"),cutoff=.3)
+```
+```{r}
+asian <- 1*{data684$race==1}
+other <- 1*{data684$race==2}
+fact.scores <- factanal(data684[2:12],3,rotation="promax",scores="regression")$scores
+
+kevin <- data.frame(data684[13:17],log_sal = log(data684$salary),fact.scores, asian,other)
+kevin$race <- factor(kevin$race)
+kevin$asian <- factor(kevin$asian)
+kevin$other <- factor(kevin$other)
+cor(fact.scores)
+```
+```{r}
+#muticolinearity
+t.test(log_sal ~ gend_F, data=kevin)
+t.test(Factor1 ~ gend_F,data=kevin)
+t.test(Factor2 ~ gend_F, data=kevin)
+t.test(Factor3 ~ gend_F, data=kevin)
+chisq.test(table(kevin[,c("gend_F","race")]))
+anova(aov(log_sal ~ factor(race), data=kevin))
+anova(aov(Factor1 ~ factor(race), data=kevin))
+anova(aov(Factor2 ~ factor(race), data=kevin))
+anova(aov(Factor3 ~ factor(race), data=kevin))
+cor(kevin[,c("log_sal",paste0("Factor",1:3))])
+cor.test(kevin$log_sal,kevin$Factor1)
+cor.test(kevin$log_sal,kevin$Factor2)
+cor.test(kevin$log_sal,kevin$Factor3)
+cor.test(kevin$Factor1,kevin$Factor2)
+cor.test(kevin$Factor1,kevin$Factor3)
+cor.test(kevin$Factor2,kevin$Factor3)
+```
+```{r}
+#bivariate regressions
+t.test(jobrating ~ gend_F, data=kevin)
+anova(aov(jobrating ~ race, data=kevin))
+summary(lm(jobrating ~ log_sal, data=kevin))
+summary(lm(jobrating ~ Factor1, data=kevin ))
+summary(lm(jobrating ~ Factor2, data=kevin ))
+summary(lm(jobrating ~ Factor3, data=kevin ))
+
+chisq.test(table(kevin[,c("gend_F","promote")]))
+chisq.test(table(kevin[,c("race","promote")]))
+summary(glm(promote ~ log_sal, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ Factor1, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ Factor2, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ Factor3, data=kevin, family=binomial(link="logit")))
+```
+```{r}
+#controlling confounding for gender
+summary(lm(jobrating ~ gend_F, data=kevin))
+summary(lm(jobrating ~ gend_F * log_sal, data=kevin))
+summary(lm(jobrating ~ gend_F + log_sal, data=kevin))
+summary(lm(jobrating ~ gend_F * Factor1, data=kevin))
+summary(lm(jobrating ~ gend_F + Factor1, data=kevin))
+summary(lm(jobrating ~ gend_F * Factor2, data=kevin))
+summary(lm(jobrating ~ gend_F + Factor2, data=kevin))
+summary(lm(jobrating ~ gend_F * Factor3, data=kevin))
+summary(lm(jobrating ~ gend_F + Factor3, data=kevin))
+
+summary(lm(jobrating ~ gend_F * factor(race), data=kevin))
+summary(lm(jobrating ~ gend_F + factor(race), data=kevin))
+
+summary(lm(jobrating ~ race, data=kevin))
+summary(lm(jobrating ~ race * log_sal, data=kevin))
+summary(lm(jobrating ~ race + log_sal, data=kevin))
+summary(lm(jobrating ~ race * Factor1, data=kevin))
+summary(lm(jobrating ~ race + Factor1, data=kevin))
+summary(lm(jobrating ~ race * Factor2, data=kevin))
+summary(lm(jobrating ~ race + Factor2, data=kevin))
+summary(lm(jobrating ~ race * Factor3, data=kevin))
+summary(lm(jobrating ~ race + Factor3, data=kevin))
+```
+
+```{r}
+summary(glm(promote ~ gend_F, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ gend_F * log_sal, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ gend_F + log_sal, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ gend_F * Factor1, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ gend_F + Factor1, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ gend_F * Factor2, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ gend_F + Factor2, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ gend_F * Factor3, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ gend_F + Factor3, data=kevin, family=binomial(link="logit")))
+
+summary(glm(promote ~ gend_F * race, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ gend_F + race, data=kevin, family=binomial(link="logit")))
+
+summary(glm(promote ~ race, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ race * log_sal, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ race + log_sal, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ race * Factor1, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ race + Factor1, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ race * Factor2, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ race + Factor2, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ race * Factor3, data=kevin, family=binomial(link="logit")))
+summary(glm(promote ~ race + Factor3, data=kevin, family=binomial(link="logit")))
+```
+```{r}
+#model selection
+lm1 <- lm(jobrating~gend_F + asian + other + log_sal + Factor1 + Factor2 + Factor3, data=kevin) #baseline model
+summary(lm1)
+
+#backwise 
+(backAIC <- step(lm1, direction = 'backward', data=kevin))
+(backBIC <- step(lm1, direction = 'backward', data=kevin, k=log(nrow(kevin))))
+
+glm1 <- glm(promote ~ gend_F + asian + other + log_sal + Factor1 + Factor2 + Factor3 + jobrating,
+            data=kevin, family=binomial(link="logit")) #baseline glm
+(glmbackAIC <- step(glm1, direction = 'backward', data=kevin))
+(glmbackBIC <- step(glm1, direction = 'backward', data=kevin, k=log(nrow(kevin))))
+```
+```{r}
+summary(backAIC)
+summary(backBIC)
+anova( backBIC,backAIC, test = "F")
+
+summary(glmbackAIC)
+summary(glmbackBIC)
+anova(glmbackBIC,glmbackAIC, test = "Chisq")
+
+#best model backAIC, glmbackAIC
+```
+```{r}
+#model assessment 
+#for lm
+par(mfrow = c(2,2))
+plot(backAIC)
+```
+```{r}
+#for glm
+#chisq test
+anova(glmbackAIC, test = "Chisq")
+
+#HL test
+library(MKmisc)
+HLgof.test(fit = fitted(glmbackAIC), obs = kevin$promote)
+
+dres <- residuals(glmbackAIC, type = "deviance")
+fit <- fitted(glmbackAIC)
+
+plot(fit, dres, col = c("red", "blue"))
+lines(lowess(fit,dres),col="black",lwd=2)
+
+pres <- residuals(glmbackAIC, type = "pearson")
+(disp <- sum((pres^2)/431))
+summary(glmbackAIC, dispersion = disp)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
